@@ -4,7 +4,7 @@ def count_fruits(fruits: list[str]) -> dict[str, int]:
     """
     Return, for each fruit element, its frequency in the given list.
     """
-    counter = Counter(fruits)
+    counter = dict(Counter(fruits))
     return counter
 
 
@@ -36,8 +36,8 @@ def main() -> None:
         ]
     ) == {"apple": 6}
     try:
-        count_fruits(1)
-        count_fruits("not a list")
+        count_fruits(1) # type: ignore
+        count_fruits("not a list") # type: ignore
         assert False
     except Exception:
         assert True
