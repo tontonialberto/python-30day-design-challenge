@@ -9,10 +9,10 @@ SENSOR_TYPES = ["Temperature", "Humidity", "CO2"]
 SENSOR_FILTERS = ["All", *SENSOR_TYPES]
 
 
-ConverterFunc = List[Callable[[float], float]]
+ConverterFunc = Callable[[float], float]
 
 
-SensorProcessors = Dict[str, ConverterFunc]
+ProcessorPipeline = Dict[str, List[ConverterFunc]]
 """Map a sensor to a list of post-processing functions."""
 
 
@@ -45,7 +45,7 @@ def compensate_co2_sensor_bias(co2_biased: float) -> float:
 
 
 def process_row(
-    row: "pd.Series[Any]", processors: SensorProcessors
+    row: "pd.Series[Any]", processors: ProcessorPipeline
 ) -> "pd.Series[Any]":
     """
     Apply the data transformation to the given measurement row.
@@ -68,7 +68,7 @@ def process_row(
     return row
 
 
-def process_data(data: pd.DataFrame, processors: SensorProcessors) -> pd.DataFrame:
+def process_data(data: pd.DataFrame, processors: ProcessorPipeline) -> pd.DataFrame:
     """
     Args:
 
@@ -88,10 +88,11 @@ def process_data(data: pd.DataFrame, processors: SensorProcessors) -> pd.DataFra
     return processed_data_single
 
 
-DataFilter = Callable[[pd.DataFrame], pd.DataFrame]
+FilterFunc = Callable[[pd.DataFrame], pd.DataFrame]
+"""Takes the input data and filters out some rows based on some criteria."""
 
 
-def filter_data(data: pd.DataFrame, filterers: Iterable[DataFilter]) -> pd.DataFrame:
+def filter_data(data: pd.DataFrame, filterers: Iterable[FilterFunc]) -> pd.DataFrame:
     for filterer in filterers:
         data = filterer(data)
     return data
