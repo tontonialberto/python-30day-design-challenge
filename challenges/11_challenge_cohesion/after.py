@@ -118,31 +118,29 @@ def filter_by_sensor_type(sensor_type: str, data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def filter_exclude_unknown_sensors(sensor_types: List[str], data: pd.DataFrame) -> pd.DataFrame:
+def filter_exclude_unknown_sensors(
+    sensor_types: List[str], data: pd.DataFrame
+) -> pd.DataFrame:
     """Filter out rows coming from unknown sensors."""
     data = data.loc[data["Sensor"].isin(sensor_types)]
     return data
 
 
-ROWS_PROCESSORS: SensorProcessors = {
-    "CO2": [compensate_co2_sensor_bias],
-    "Humidity": [percentage],
-    "Temperature": [celsius_to_kelvin],
-}
-
-
 def process_csv(option: str, csv_path: str) -> pd.DataFrame:
     validate_option(option)
 
-    data: pd.DataFrame = pd.read_csv(csv_path) 
-    processed_data = filter_data(
-        data,
-        [
-            partial(filter_by_sensor_type, option),
-            partial(filter_exclude_unknown_sensors, SENSOR_TYPES),
-        ],
-    )
-    processed_data = process_data(processed_data, ROWS_PROCESSORS)
+    data: pd.DataFrame = pd.read_csv(csv_path)
+    filter_funcs = [
+        partial(filter_by_sensor_type, option),
+        partial(filter_exclude_unknown_sensors, SENSOR_TYPES),
+    ]
+    processed_data = filter_data(data, filter_funcs)
+    processor_funcs = {
+        "CO2": [compensate_co2_sensor_bias],
+        "Humidity": [percentage],
+        "Temperature": [celsius_to_kelvin],
+    }
+    processed_data = process_data(processed_data, processor_funcs)
     return processed_data
 
 

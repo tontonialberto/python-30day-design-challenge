@@ -1,16 +1,24 @@
 from typing import Any
 import unittest
-from after import ROWS_PROCESSORS, validate_option, process_row
+from after import celsius_to_kelvin, compensate_co2_sensor_bias, percentage, validate_option, process_row
 from pandas import Series
 
 
 CSV_HEADER = ["Timestamp", "Device", "Sensor", "Value"]
+
 
 def create_row(device: str, sensor: str, value: float) -> "Series[Any]":
     return Series(
         data=["2022-01-01 00:00:00", device, sensor, value],
         index=CSV_HEADER,
     )
+
+
+PROCESSOR_FUNCS = {
+    "CO2": [compensate_co2_sensor_bias],
+    "Humidity": [percentage],
+    "Temperature": [celsius_to_kelvin],
+}
 
 
 class Test(unittest.TestCase):
@@ -29,7 +37,7 @@ class Test(unittest.TestCase):
             sensor="Temperature",
             value=25.6,
         )
-        processed_row = process_row(row, ROWS_PROCESSORS)
+        processed_row = process_row(row, PROCESSOR_FUNCS)
         expected_temperature = 25.6 + 273.15
         actual_temperature = processed_row["Value"]
         self.assertEqual(expected_temperature, actual_temperature)
@@ -40,7 +48,7 @@ class Test(unittest.TestCase):
             sensor="CO2",
             value=300,
         )
-        processed_row = process_row(row, ROWS_PROCESSORS)
+        processed_row = process_row(row, PROCESSOR_FUNCS)
         expected = 300 + 23
         actual = processed_row["Value"]
         self.assertEqual(expected, actual)
@@ -51,7 +59,7 @@ class Test(unittest.TestCase):
             sensor="Humidity",
             value=98,
         )
-        processed_row = process_row(row, ROWS_PROCESSORS)
+        processed_row = process_row(row, PROCESSOR_FUNCS)
         expected = 98 / 100
         actual = processed_row["Value"]
         self.assertEqual(expected, actual)
